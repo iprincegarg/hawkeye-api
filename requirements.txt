@@ -1,7 +1,10 @@
 fastapi
 uvicorn
 python-multipart
-numba==0.58.1
-pymatting==1.1.12
-rembg
+numba
+pymatting
+rembg[cpu]
 Pillow
+nltk
+deep-translator
+edge-tts

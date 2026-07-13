@@ -1,4 +1,4 @@
-﻿# Hawkeye API — Local Setup Guide
+# Hawkeye API — Local Setup Guide
 
 A FastAPI service exposing two endpoints:
 
@@ -6,6 +6,8 @@ A FastAPI service exposing two endpoints:
 |---|---|
 | `POST /remove-bg` | Removes image background using **rembg** |
 | `POST /tts` | Converts text to Hindi speech (`.m4a`) via **Piper TTS** + **ffmpeg** |
+| `POST /translate-hinglish` | Translates English text to Hinglish using **NLTK** + **Google Translator** |
+| `POST /new-tts` | High-quality Hindi TTS with Hinglish support via **Edge TTS** |
 
 ---
 
@@ -170,6 +172,48 @@ curl -X POST http://localhost:8000/tts \
 
 The response is an **M4A audio file** (AAC, 128 kbps).
 
+---
+
+### `/translate-hinglish` — English to Hinglish Translation
+
+**Method:** `POST`  
+**Content-Type:** `application/json`
+
+| Field | Type | Description |
+|---|---|---|
+| `text` | string | The English text to translate |
+
+#### curl example
+```bash
+curl -X POST http://localhost:8000/translate-hinglish \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Development what it promises"}'
+```
+
+The response is a JSON containing the Hinglish translation.
+
+---
+
+### `/new-tts` — Text-to-Speech (Edge TTS / Hinglish)
+
+**Method:** `POST`  
+**Content-Type:** `application/x-www-form-urlencoded` or `multipart/form-data`
+
+| Field | Type | Description |
+|---|---|---|
+| `text` | string | The Hinglish/Hindi text to convert to speech |
+| `name` | string | Output filename (without extension) |
+
+#### curl example
+```bash
+curl -X POST http://localhost:8000/new-tts \
+  -d "text=डेवलपमेंट क्या वादे करता है" \
+  -d "name=edge_audio" \
+  --output edge_audio.mp3
+```
+
+The response returns a JSON with the URL to the playable `.mp3` file. You can also preview it directly at `http://localhost:8000/temp_audio/edge_audio.mp3`.
+
 #### Swagger UI
 You can also test both endpoints interactively at:  
 **http://localhost:8000/docs**
@@ -222,4 +266,10 @@ curl -X POST http://localhost:8000/remove-bg -F "file=@photo.jpg" --output photo
 
 # 4. Test tts
 curl -X POST http://localhost:8000/tts -F "text=नमस्ते" -F "name=hello" --output hello.m4a
+
+# 5. Test translate-hinglish
+curl -X POST http://localhost:8000/translate-hinglish -H "Content-Type: application/json" -d '{"text": "Development"}'
+
+# 6. Test new-tts
+curl -X POST http://localhost:8000/new-tts -d "text=नमस्ते" -d "name=hello_edge"
 ```
