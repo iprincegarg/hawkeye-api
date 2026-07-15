@@ -131,6 +131,7 @@ async def generate_speech_edge(request: Request, text: str = Form(...), name: st
     try:
         # File paths
         mp3_path = os.path.join(TEMP_DIR, f"{name}.mp3")
+        m4a_path = os.path.join(TEMP_DIR, f"{name}.m4a")
 
         # Voice: hi-IN-SwaraNeural (female) or hi-IN-MadhurNeural (male)
         voice = "hi-IN-SwaraNeural"
@@ -138,17 +139,55 @@ async def generate_speech_edge(request: Request, text: str = Form(...), name: st
         communicate = edge_tts.Communicate(text, voice)
         await communicate.save(mp3_path)
         
+        # Convert .mp3 to .m4a using ffmpeg (overwrites if exists)
+        ffmpeg_cmd = f'ffmpeg -y -i "{mp3_path}" -c:a aac -b:a 128k "{m4a_path}"'
+        subprocess.run(ffmpeg_cmd, shell=True, check=True)
+
+        # Clean up the temporary .mp3 file
+        if os.path.exists(mp3_path):
+            os.remove(mp3_path)
+        
         # Get full absolute path
-        full_local_path = os.path.abspath(mp3_path)
+        full_local_path = os.path.abspath(m4a_path)
         
         # Construct the URL to the file
         base_url = str(request.base_url)
-        file_url = f"{base_url}temp_audio/{name}.mp3"
+        file_url = f"{base_url}temp_audio/{name}.m4a"
         
         return {
             "message": "Audio generated successfully",
             "local_path": full_local_path,
             "url": file_url
         }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+class DeleteMediaRequest(BaseModel):
+    url: str
+
+@app.post("/delete-media")
+async def delete_media(request: DeleteMediaRequest):
+    try:
+        from urllib.parse import urlparse
+        parsed_url = urlparse(request.url)
+        path = parsed_url.path
+        
+        if not path.startswith("/temp_audio/"):
+            raise HTTPException(status_code=400, detail="Invalid media URL")
+            
+        filename = path.replace("/temp_audio/", "")
+        
+        if "/" in filename or "\\" in filename or ".." in filename:
+            raise HTTPException(status_code=400, detail="Invalid filename")
+            
+        file_path = os.path.join(TEMP_DIR, filename)
+        
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            return {"message": "File deleted successfully"}
+        else:
+            raise HTTPException(status_code=404, detail="File not found")
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

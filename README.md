@@ -8,6 +8,7 @@ A FastAPI service exposing two endpoints:
 | `POST /tts` | Converts text to Hindi speech (`.m4a`) via **Piper TTS** + **ffmpeg** |
 | `POST /translate-hinglish` | Translates English text to Hinglish using **NLTK** + **Google Translator** |
 | `POST /new-tts` | High-quality Hindi TTS with Hinglish support via **Edge TTS** |
+| `POST /delete-media` | Deletes generated media files via URL |
 
 ---
 
@@ -209,10 +210,30 @@ The response is a JSON containing the Hinglish translation.
 curl -X POST http://localhost:8000/new-tts \
   -d "text=डेवलपमेंट क्या वादे करता है" \
   -d "name=edge_audio" \
-  --output edge_audio.mp3
+  --output edge_audio.m4a
 ```
 
-The response returns a JSON with the URL to the playable `.mp3` file. You can also preview it directly at `http://localhost:8000/temp_audio/edge_audio.mp3`.
+The response returns a JSON with the URL to the playable `.m4a` file. You can also preview it directly at `http://localhost:8000/temp_audio/edge_audio.m4a`.
+
+---
+
+### `/delete-media` — Delete Media File
+
+**Method:** `POST`  
+**Content-Type:** `application/json`
+
+| Field | Type | Description |
+|---|---|---|
+| `url` | string | The full URL of the media file to delete |
+
+#### curl example
+```bash
+curl -X POST http://localhost:8000/delete-media \
+  -H "Content-Type: application/json" \
+  -d '{"url": "http://localhost:8000/temp_audio/edge_audio.m4a"}'
+```
+
+The response is a JSON confirming the deletion.
 
 #### Swagger UI
 You can also test both endpoints interactively at:  
@@ -272,4 +293,7 @@ curl -X POST http://localhost:8000/translate-hinglish -H "Content-Type: applicat
 
 # 6. Test new-tts
 curl -X POST http://localhost:8000/new-tts -d "text=नमस्ते" -d "name=hello_edge"
+
+# 7. Test delete-media
+curl -X POST http://localhost:8000/delete-media -H "Content-Type: application/json" -d '{"url": "http://localhost:8000/temp_audio/hello_edge.m4a"}'
 ```
