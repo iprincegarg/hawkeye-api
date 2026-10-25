@@ -21,6 +21,14 @@ os.makedirs(TEMP_DIR, exist_ok=True)
 # Mount the temp_audio directory so files can be accessed via URL
 app.mount("/temp_audio", StaticFiles(directory=TEMP_DIR), name="temp_audio")
 
+# Mount Security & Malware Scanner Router for Browser URL access
+try:
+    from tools.malware_scanner import router as security_scanner_router
+    if security_scanner_router:
+        app.include_router(security_scanner_router)
+except Exception:
+    pass
+
 @app.get("/")
 def read_root():
     return {"status": "Hawkeye API is running"}
